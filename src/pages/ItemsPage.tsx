@@ -33,7 +33,7 @@ const ItemsPage = () => {
         
         // Use the real database if authenticated, otherwise use mock data
         if (user) {
-          const { data, error } = await supabase
+          let query = supabase
             .from('items')
             .select(`
               id,
@@ -51,30 +51,32 @@ const ItemsPage = () => {
               profiles:user_id (username, full_name, avatar_url, trust_score)
             `);
 
+          const { data, error } = await query;
+
           if (error) {
             throw error;
           }
 
           // Transform data to match our ItemType format
-          const formattedItems = data.map((item) => ({
+          const formattedItems = data?.map((item) => ({
             id: item.id,
             title: item.title,
-            description: item.description,
+            description: item.description || "",
             status: item.status as "lost" | "found" | "resolved",
             imageUrl: item.image_url,
             location: {
-              address: item.location_address,
-              lat: parseFloat(item.location_lat),
-              lng: parseFloat(item.location_lng),
+              address: item.location_address || "",
+              lat: parseFloat(String(item.location_lat)) || 0,
+              lng: parseFloat(String(item.location_lng)) || 0,
             },
             reward: item.reward,
             totalContributions: item.total_contributions,
-            date: item.date,
+            date: item.date || new Date().toISOString(),
             userId: item.user_id,
-            userName: item.profiles.full_name || item.profiles.username || "Anonymous",
-            userImage: item.profiles.avatar_url,
-            userTrustScore: item.profiles.trust_score || 0,
-          }));
+            userName: item.profiles?.full_name || item.profiles?.username || "Anonymous",
+            userImage: item.profiles?.avatar_url,
+            userTrustScore: item.profiles?.trust_score || 0,
+          })) || [];
 
           setItems(formattedItems);
         } else {

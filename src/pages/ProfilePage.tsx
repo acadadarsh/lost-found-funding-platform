@@ -39,7 +39,7 @@ const ProfilePage = () => {
         }
         
         // Fetch user's items from Supabase
-        const { data, error } = await supabase
+        let query = supabase
           .from('items')
           .select(`
             id,
@@ -57,28 +57,30 @@ const ProfilePage = () => {
           `)
           .eq('user_id', user.id);
 
+        const { data, error } = await query;
+
         if (error) throw error;
 
         // Transform data to match ItemType format
-        const formattedItems = data.map((item) => ({
+        const formattedItems = data?.map((item) => ({
           id: item.id,
           title: item.title,
-          description: item.description,
+          description: item.description || "",
           status: item.status as "lost" | "found" | "resolved",
           imageUrl: item.image_url,
           location: {
-            address: item.location_address,
-            lat: parseFloat(item.location_lat),
-            lng: parseFloat(item.location_lng),
+            address: item.location_address || "",
+            lat: parseFloat(String(item.location_lat)) || 0,
+            lng: parseFloat(String(item.location_lng)) || 0,
           },
           reward: item.reward,
           totalContributions: item.total_contributions,
-          date: item.date,
+          date: item.date || new Date().toISOString(),
           userId: item.user_id,
           userName: profile?.full_name || profile?.username || user.email?.split('@')[0] || "User",
           userImage: profile?.avatar_url,
           userTrustScore: profile?.trust_score || 0,
-        }));
+        })) || [];
 
         setUserItems(formattedItems);
       } catch (error: any) {
