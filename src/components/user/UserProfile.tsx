@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ItemCard } from "@/components/items/ItemCard";
+import ItemCard from "@/components/items/ItemCard";
 import { ItemType, UserType } from "@/lib/types";
 import { Award, MapPin, Package } from "lucide-react";
 
