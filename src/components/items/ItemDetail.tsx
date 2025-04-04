@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Calendar, DollarSign, MessageSquare, Share2, Flag, ThumbsUp } from "lucide-react";
@@ -10,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { ItemType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import MapComponent from "@/components/map/MapComponent";
 
 type ItemDetailProps = {
   item: ItemType;
@@ -208,9 +208,20 @@ const ItemDetail = ({ item }: ItemDetailProps) => {
       </div>
       <div className="p-6 bg-gray-50 border-t">
         <h3 className="font-semibold mb-4">Item Location</h3>
-        <div className="h-64 bg-gray-200 rounded-lg overflow-hidden">
-          {/* Placeholder for the map */}
-          <div className="w-full h-full bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=40.7590,-73.969&zoom=15&size=600x300&scale=2&markers=color:red%7C40.7590,-73.969&key=DEMO_KEY')] bg-cover bg-center"></div>
+        <div className="h-64 rounded-lg overflow-hidden">
+          {item.location && item.location.lat && item.location.lng ? (
+            <MapComponent 
+              singleItem={item}
+              center={{ lat: item.location.lat, lng: item.location.lng }}
+              zoom={15}
+              height="300px"
+              showItemInfo={false}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <p className="text-gray-500">No location data available</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
