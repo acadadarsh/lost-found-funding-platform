@@ -1,12 +1,15 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Bell, User } from "lucide-react";
+import { Menu, X, Search, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import UserMenu from "@/components/layout/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
@@ -48,19 +51,18 @@ const Navbar = () => {
                 className="pl-10 py-1 border-gray-300 rounded-md"
               />
             </div>
-            <Button variant="outline" size="sm">
-              <Bell className="h-4 w-4 mr-2" />
-              <span className="sr-only sm:not-sr-only">Notifications</span>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/profile">
-                <User className="h-4 w-4 mr-2" />
-                <span className="sr-only sm:not-sr-only">Profile</span>
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/create">Post Item</Link>
-            </Button>
+            {user && (
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4 mr-2" />
+                <span className="sr-only sm:not-sr-only">Notifications</span>
+              </Button>
+            )}
+            <UserMenu />
+            {user && (
+              <Button size="sm" asChild>
+                <Link to="/create">Post Item</Link>
+              </Button>
+            )}
           </div>
           <div className="flex items-center sm:hidden">
             <button
@@ -99,20 +101,32 @@ const Navbar = () => {
             >
               Leaderboard
             </Link>
-            <Link
-              to="/profile"
-              className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Profile
-            </Link>
-            <div className="pl-3 pr-4 py-2">
-              <Button className="w-full" asChild>
-                <Link to="/create" onClick={() => setIsMenuOpen(false)}>
-                  Post Item
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Profile
                 </Link>
-              </Button>
-            </div>
+                <div className="pl-3 pr-4 py-2">
+                  <Button className="w-full" asChild>
+                    <Link to="/create" onClick={() => setIsMenuOpen(false)}>
+                      Post Item
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="pl-3 pr-4 py-2">
+                <Button className="w-full" asChild>
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                    Sign In
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}

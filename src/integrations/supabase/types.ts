@@ -9,7 +9,99 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      items: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
+          reward: number | null
+          status: string
+          title: string
+          total_contributions: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          reward?: number | null
+          status: string
+          title: string
+          total_contributions?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          reward?: number | null
+          status?: string
+          title?: string
+          total_contributions?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          items_found: number | null
+          items_lost: number | null
+          items_resolved: number | null
+          items_returned: number | null
+          trust_score: number | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          items_found?: number | null
+          items_lost?: number | null
+          items_resolved?: number | null
+          items_returned?: number | null
+          trust_score?: number | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          items_found?: number | null
+          items_lost?: number | null
+          items_resolved?: number | null
+          items_returned?: number | null
+          trust_score?: number | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ItemSearch from "@/components/items/ItemSearch";
@@ -10,16 +10,95 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { ItemType, FilterOptions } from "@/lib/types";
 import { mockItems } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ItemsPage = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterOptions>({
     status: "all",
   });
+  const [items, setItems] = useState<ItemType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch items from Supabase
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+        
+        // Use the real database if authenticated, otherwise use mock data
+        if (user) {
+          const { data, error } = await supabase
+            .from('items')
+            .select(`
+              id,
+              title,
+              description,
+              status,
+              image_url,
+              location_address,
+              location_lat,
+              location_lng,
+              reward,
+              total_contributions,
+              date,
+              user_id,
+              profiles:user_id (username, full_name, avatar_url, trust_score)
+            `);
+
+          if (error) {
+            throw error;
+          }
+
+          // Transform data to match our ItemType format
+          const formattedItems = data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            status: item.status as "lost" | "found" | "resolved",
+            imageUrl: item.image_url,
+            location: {
+              address: item.location_address,
+              lat: parseFloat(item.location_lat),
+              lng: parseFloat(item.location_lng),
+            },
+            reward: item.reward,
+            totalContributions: item.total_contributions,
+            date: item.date,
+            userId: item.user_id,
+            userName: item.profiles.full_name || item.profiles.username || "Anonymous",
+            userImage: item.profiles.avatar_url,
+            userTrustScore: item.profiles.trust_score || 0,
+          }));
+
+          setItems(formattedItems);
+        } else {
+          // Use mock data if not authenticated
+          setItems(mockItems);
+        }
+      } catch (error: any) {
+        console.error("Error fetching items:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load items. Using mock data instead.",
+          variant: "destructive",
+        });
+        setItems(mockItems);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [user, toast]);
 
   // Filter items based on search and filters
-  const filteredItems = mockItems.filter((item) => {
+  const filteredItems = items.filter((item) => {
     // Filter by search query
     if (
       searchQuery &&
@@ -86,7 +165,11 @@ const ItemsPage = () => {
             </Tabs>
           </div>
 
-          {viewMode === "grid" ? (
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => <ItemCard key={item.id} item={item} />)
