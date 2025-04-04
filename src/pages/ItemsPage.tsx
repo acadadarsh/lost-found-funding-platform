@@ -33,7 +33,8 @@ const ItemsPage = () => {
         
         // Use the real database if authenticated, otherwise use mock data
         if (user) {
-          let query = supabase
+          // Get all items
+          const { data: itemsData, error: itemsError } = await supabase
             .from('items')
             .select(`
               id,
@@ -47,36 +48,49 @@ const ItemsPage = () => {
               reward,
               total_contributions,
               date,
-              user_id,
-              profiles:user_id (username, full_name, avatar_url, trust_score)
+              user_id
             `);
 
-          const { data, error } = await query;
-
-          if (error) {
-            throw error;
+          if (itemsError) {
+            throw itemsError;
           }
 
-          // Transform data to match our ItemType format
-          const formattedItems = data?.map((item) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description || "",
-            status: item.status as "lost" | "found" | "resolved",
-            imageUrl: item.image_url,
-            location: {
-              address: item.location_address || "",
-              lat: parseFloat(String(item.location_lat)) || 0,
-              lng: parseFloat(String(item.location_lng)) || 0,
-            },
-            reward: item.reward,
-            totalContributions: item.total_contributions,
-            date: item.date || new Date().toISOString(),
-            userId: item.user_id,
-            userName: item.profiles?.full_name || item.profiles?.username || "Anonymous",
-            userImage: item.profiles?.avatar_url,
-            userTrustScore: item.profiles?.trust_score || 0,
-          })) || [];
+          // Get user profiles for each item
+          const formattedItems: ItemType[] = [];
+          
+          for (const item of itemsData || []) {
+            // Get profile for each user_id
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select(`
+                username,
+                full_name,
+                avatar_url,
+                trust_score
+              `)
+              .eq('id', item.user_id)
+              .single();
+            
+            formattedItems.push({
+              id: item.id,
+              title: item.title,
+              description: item.description || "",
+              status: item.status as "lost" | "found" | "resolved",
+              imageUrl: item.image_url,
+              location: {
+                address: item.location_address || "",
+                lat: parseFloat(String(item.location_lat)) || 0,
+                lng: parseFloat(String(item.location_lng)) || 0,
+              },
+              reward: item.reward,
+              totalContributions: item.total_contributions,
+              date: item.date || new Date().toISOString(),
+              userId: item.user_id,
+              userName: profileData?.full_name || profileData?.username || "Anonymous",
+              userImage: profileData?.avatar_url,
+              userTrustScore: profileData?.trust_score || 0,
+            });
+          }
 
           setItems(formattedItems);
         } else {

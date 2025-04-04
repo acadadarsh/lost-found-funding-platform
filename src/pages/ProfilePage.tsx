@@ -39,7 +39,7 @@ const ProfilePage = () => {
         }
         
         // Fetch user's items from Supabase
-        let query = supabase
+        const { data: itemsData, error: itemsError } = await supabase
           .from('items')
           .select(`
             id,
@@ -57,12 +57,10 @@ const ProfilePage = () => {
           `)
           .eq('user_id', user.id);
 
-        const { data, error } = await query;
-
-        if (error) throw error;
+        if (itemsError) throw itemsError;
 
         // Transform data to match ItemType format
-        const formattedItems = data?.map((item) => ({
+        const formattedItems = itemsData?.map((item) => ({
           id: item.id,
           title: item.title,
           description: item.description || "",
