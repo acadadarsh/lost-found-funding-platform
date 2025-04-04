@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -7,23 +7,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MapPin, Upload, DollarSign } from "lucide-react";
+import { MapPin, Upload, DollarSign, Navigation } from "lucide-react";
 import { ItemStatus } from "@/lib/types";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 const ItemForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { position, address, loading: geoLoading } = useGeolocation();
   
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     status: "lost" as ItemStatus,
     location: "",
+    locationLat: 0,
+    locationLng: 0,
     reward: 0,
     image: null as File | null,
   });
+
+  // Update location when geolocation changes
+  useEffect(() => {
+    if (position && address && !formData.location) {
+      setFormData(prev => ({
+        ...prev,
+        location: address,
+        locationLat: position.lat,
+        locationLng: position.lng
+      }));
+    }
+  }, [position, address, formData.location]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -47,6 +63,29 @@ const ItemForm = () => {
     } else {
       setImagePreview(null);
     }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!position || !address) {
+      toast({
+        title: "Location not available",
+        description: "Please wait for your location to be determined or enter it manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      location: address,
+      locationLat: position.lat,
+      locationLng: position.lng
+    }));
+    
+    toast({
+      title: "Current location used",
+      description: "Your current location has been added to the form.",
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,7 +172,29 @@ const ItemForm = () => {
         </div>
 
         <div>
-          <Label htmlFor="location">Location*</Label>
+          <div className="flex justify-between items-center">
+            <Label htmlFor="location">Location*</Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              className="text-xs flex items-center"
+              onClick={handleUseCurrentLocation}
+              disabled={geoLoading || !position}
+            >
+              {geoLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                  Getting location...
+                </>
+              ) : (
+                <>
+                  <Navigation size={12} className="mr-1" />
+                  Use My Location
+                </>
+              )}
+            </Button>
+          </div>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <MapPin className="h-4 w-4 text-gray-400" />
