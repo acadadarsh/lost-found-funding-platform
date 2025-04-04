@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -18,8 +17,8 @@ type MapProps = {
   onMarkerClick?: (item: ItemType) => void;
 };
 
-// You'll need to replace this with your actual Mapbox access token
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZXhhbXBsZXVzZXIiLCJhIjoiY2xhbXBsZXRva2VuIn0.1234567890abcdef";
+// Updated with the actual Mapbox access token
+const MAPBOX_TOKEN = "pk.eyJ1IjoiMjRzY3NlMTA0MDY0MSIsImEiOiJjbTkzNGp4d3EwZzVoMmtzOGhyODd2cWI2In0.Y6umu0jYXbXjdmVOjdAbHQ";
 
 const MapComponent = ({ 
   items = [], 
