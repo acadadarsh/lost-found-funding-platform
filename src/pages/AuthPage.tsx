@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoCircle } from "lucide-react";
+import { Info } from "lucide-react";
 
 export default function AuthPage() {
   const { user } = useAuth();
@@ -27,7 +27,7 @@ export default function AuthPage() {
         <div className="max-w-md w-full px-4">
           <div className="mb-4">
             <Alert>
-              <InfoCircle className="h-4 w-4 mr-2" />
+              <Info className="h-4 w-4 mr-2" />
               <AlertDescription>
                 For testing, please disable email verification in the Supabase dashboard under Authentication → Email Templates.
               </AlertDescription>

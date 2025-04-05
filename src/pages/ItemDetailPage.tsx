@@ -26,53 +26,61 @@ const ItemDetailPage = () => {
       try {
         // Try to fetch from Supabase first
         if (id) {
-          const { data, error } = await supabase
+          console.log("Fetching item with ID:", id);
+          
+          // First, get the item data
+          const { data: itemData, error: itemError } = await supabase
             .from('items')
-            .select(`
-              id,
-              title,
-              description,
-              status,
-              image_url,
-              location_address,
-              location_lat,
-              location_lng,
-              reward,
-              total_contributions,
-              date,
-              user_id,
-              profiles(full_name, avatar_url, trust_score)
-            `)
+            .select('*')
             .eq('id', id)
             .single();
 
-          if (data && !error) {
-            // Format data to match ItemType
-            const formattedItem: ItemType = {
-              id: data.id,
-              title: data.title,
-              description: data.description || '',
-              status: data.status as ItemType['status'],
-              imageUrl: data.image_url || undefined,
-              location: {
-                address: data.location_address || '',
-                lat: data.location_lat || 0,
-                lng: data.location_lng || 0,
-              },
-              reward: data.reward || undefined,
-              totalContributions: data.total_contributions || undefined,
-              date: data.date || new Date().toISOString(),
-              userId: data.user_id,
-              userName: data.profiles?.full_name || 'Anonymous',
-              userImage: data.profiles?.avatar_url,
-              userTrustScore: data.profiles?.trust_score || 50,
-            };
-            
-            setItem(formattedItem);
-            setError(null);
-            console.log("Item loaded from database:", formattedItem);
-            return;
+          if (itemError || !itemData) {
+            console.error("Error fetching item:", itemError);
+            throw new Error(itemError?.message || "Item not found");
           }
+          
+          console.log("Item data retrieved:", itemData);
+          
+          // Then, get the profile data separately
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', itemData.user_id)
+            .single();
+            
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            // Don't throw here, just log the error and continue with default values
+          }
+          
+          console.log("Profile data retrieved:", profileData || "No profile found");
+
+          // Format data to match ItemType
+          const formattedItem: ItemType = {
+            id: itemData.id,
+            title: itemData.title,
+            description: itemData.description || '',
+            status: itemData.status as ItemType['status'],
+            imageUrl: itemData.image_url || undefined,
+            location: {
+              address: itemData.location_address || '',
+              lat: itemData.location_lat || 0,
+              lng: itemData.location_lng || 0,
+            },
+            reward: itemData.reward || undefined,
+            totalContributions: itemData.total_contributions || undefined,
+            date: itemData.date || new Date().toISOString(),
+            userId: itemData.user_id,
+            userName: profileData?.full_name || profileData?.username || 'Anonymous',
+            userImage: profileData?.avatar_url,
+            userTrustScore: profileData?.trust_score || 50,
+          };
+          
+          setItem(formattedItem);
+          setError(null);
+          console.log("Item loaded from database:", formattedItem);
+          return;
         }
         
         // Fallback to mock data
@@ -85,7 +93,7 @@ const ItemDetailPage = () => {
         } else {
           setError("Item not found");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching item:", err);
         setError("Error loading item");
         toast({
