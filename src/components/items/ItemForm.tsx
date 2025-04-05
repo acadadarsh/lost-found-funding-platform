@@ -133,7 +133,7 @@ const ItemForm = () => {
           toast({
             title: "Warning",
             description: "Failed to upload image, but continuing with item submission.",
-            variant: "warning",
+            variant: "default", // Changed from "warning" to "default" since "warning" is not a valid variant
           });
         }
       }
