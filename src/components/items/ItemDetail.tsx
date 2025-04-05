@@ -55,33 +55,33 @@ const ItemDetail = ({ item }: ItemDetailProps) => {
     : 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-black/80 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden border-2 border-white/20 font-mono">
       <div className="md:flex">
         <div className="md:w-1/2">
           <img
             src={item.imageUrl || "/placeholder.svg"}
             alt={item.title}
-            className="w-full h-64 md:h-full object-cover"
+            className="w-full h-64 md:h-full object-cover pixelated"
           />
         </div>
         <div className="p-6 md:w-1/2">
           <div className="flex items-center justify-between mb-4">
-            <Badge className={`${statusColors[item.status].bg}`}>
+            <Badge className={`${statusColors[item.status].bg} font-mono uppercase text-xs`}>
               {statusColors[item.status].text}
             </Badge>
             <div className="flex space-x-2">
-              <Button size="icon" variant="ghost">
+              <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
                 <Share2 className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost">
+              <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
                 <Flag className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold mb-2">{item.title}</h1>
+          <h1 className="text-2xl font-bold mb-2 text-white">{item.title}</h1>
 
-          <div className="space-y-3 text-gray-600 mb-6">
+          <div className="space-y-3 text-gray-300 mb-6">
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
               <span>{item.location.address}</span>
@@ -92,21 +92,21 @@ const ItemDetail = ({ item }: ItemDetailProps) => {
             </div>
           </div>
 
-          <div className="border-t border-b py-4 mb-6">
-            <h3 className="font-semibold mb-2">Description</h3>
-            <p className="text-gray-600">{item.description}</p>
+          <div className="border-t border-b border-white/20 py-4 mb-6">
+            <h3 className="font-semibold mb-2 text-white">Description</h3>
+            <p className="text-gray-300">{item.description}</p>
           </div>
 
           <div className="flex items-center mb-6">
-            <Avatar className="h-10 w-10 mr-3">
-              <AvatarImage src={item.userImage} />
-              <AvatarFallback>
+            <Avatar className="h-10 w-10 mr-3 border-2 border-white/30">
+              <AvatarImage src={item.userImage} className="pixelated" />
+              <AvatarFallback className="bg-black/50 text-white">
                 {item.userName.split(" ").map(n => n[0]).join("")}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{item.userName}</p>
-              <div className="flex items-center text-sm text-gray-500">
+              <p className="font-medium text-white">{item.userName}</p>
+              <div className="flex items-center text-sm text-gray-300">
                 <ThumbsUp className="h-3 w-3 mr-1" />
                 <span>Trust Score: {item.userTrustScore}%</span>
               </div>
@@ -206,9 +206,9 @@ const ItemDetail = ({ item }: ItemDetailProps) => {
           )}
         </div>
       </div>
-      <div className="p-6 bg-gray-50 border-t">
-        <h3 className="font-semibold mb-4">Item Location</h3>
-        <div className="h-64 rounded-lg overflow-hidden">
+      <div className="p-6 bg-black/90 border-t border-white/20">
+        <h3 className="font-semibold mb-4 text-white">Item Location</h3>
+        <div className="h-64 rounded-sm overflow-hidden border-2 border-white/20">
           {item.location && item.location.lat && item.location.lng ? (
             <MapComponent 
               singleItem={item}
@@ -218,8 +218,8 @@ const ItemDetail = ({ item }: ItemDetailProps) => {
               showItemInfo={false}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <p className="text-gray-500">No location data available</p>
+            <div className="w-full h-full flex items-center justify-center bg-black/70">
+              <p className="text-gray-400 font-mono">NO LOCATION DATA AVAILABLE</p>
             </div>
           )}
         </div>

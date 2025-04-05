@@ -19,6 +19,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				mono: ['Courier New', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -70,6 +73,17 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Pixelated theme colors
+				pixel: {
+					black: '#222222',
+					white: '#FFFFFF',
+					gray: '#8E9196',
+					'dark-gray': '#403E43',
+					blue: '#3b82f6',
+					red: '#ef4444',
+					green: '#10B981',
+					yellow: '#F59E0B',
 				}
 			},
 			borderRadius: {
@@ -97,12 +111,24 @@ export default {
 				'pulse-slow': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.8' },
+				},
+				'pixel-spin': {
+					'0%': { transform: 'rotate(0deg)' },
+					'12.5%': { transform: 'rotate(45deg)' },
+					'25%': { transform: 'rotate(90deg)' },
+					'37.5%': { transform: 'rotate(135deg)' },
+					'50%': { transform: 'rotate(180deg)' },
+					'62.5%': { transform: 'rotate(225deg)' },
+					'75%': { transform: 'rotate(270deg)' },
+					'87.5%': { transform: 'rotate(315deg)' },
+					'100%': { transform: 'rotate(360deg)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
+				'pixel-spin': 'pixel-spin 1s steps(8) infinite',
 			}
 		}
 	},

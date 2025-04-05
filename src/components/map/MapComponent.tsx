@@ -50,7 +50,7 @@ const MapComponent = ({
     
     const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style: 'mapbox://styles/mapbox/dark-v11', // Changed to dark style for pixelated theme
       center: [initialCenter.lng, initialCenter.lat],
       zoom: zoom
     });
@@ -87,6 +87,7 @@ const MapComponent = ({
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        console.log("User location found:", latitude, longitude);
         setUserLocation({ lat: latitude, lng: longitude });
         
         // If center is not provided externally, center on user location
@@ -107,36 +108,18 @@ const MapComponent = ({
         const userMarkerEl = document.createElement('div');
         userMarkerEl.className = 'user-location-marker';
         userMarkerEl.innerHTML = `
-          <div style="
-            background-color: #3b82f6;
-            border: 2px solid white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            animation: pulse 2s infinite;
-          ">
+          <div class="pixelated-user-marker">
+            <div class="inner-pulse"></div>
           </div>
         `;
         
-        // Add CSS animation for the user marker
-        const style = document.createElement('style');
-        style.innerHTML = `
-          @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-          }
-        `;
-        document.head.appendChild(style);
-        
         // Add user location marker
-        userLocationMarkerRef.current = new mapboxgl.Marker(userMarkerEl)
-          .setLngLat([longitude, latitude])
-          .addTo(map.current);
+        if (map.current) {
+          userLocationMarkerRef.current = new mapboxgl.Marker(userMarkerEl)
+            .setLngLat([longitude, latitude])
+            .addTo(map.current);
+          console.log("User location marker added");
+        }
       },
       (error) => {
         console.error('Error getting user location:', error.message);
@@ -152,6 +135,7 @@ const MapComponent = ({
   // Handle markers for items
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
+    console.log("Adding markers for items:", items.length);
     
     // Clear existing markers
     Object.values(markersRef.current).forEach(marker => marker.remove());
@@ -162,8 +146,9 @@ const MapComponent = ({
     
     displayItems.forEach(item => {
       if (!item.location?.lat || !item.location?.lng) return;
+      console.log("Adding marker for item:", item.id, item.location);
       
-      // Create marker element
+      // Create marker element with pixelated style
       const markerEl = document.createElement('div');
       markerEl.className = 'marker-element';
       
@@ -173,39 +158,28 @@ const MapComponent = ({
         '#6b7280';
       
       markerEl.innerHTML = `
-        <div style="
-          background-color: ${markerColor};
-          color: white;
-          border-radius: 50%;
-          width: 30px;
-          height: 30px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-          </svg>
+        <div class="pixelated-marker" style="background-color: ${markerColor};">
         </div>
       `;
       
       // Add marker to map
-      const marker = new mapboxgl.Marker(markerEl)
-        .setLngLat([item.location.lng, item.location.lat])
-        .addTo(map.current);
-      
-      // Add click handler
-      marker.getElement().addEventListener('click', () => {
-        if (onMarkerClick) {
-          onMarkerClick(item);
-        } else {
-          setSelectedItem(item);
-        }
-      });
-      
-      markersRef.current[item.id] = marker;
+      if (map.current) {
+        const marker = new mapboxgl.Marker(markerEl)
+          .setLngLat([item.location.lng, item.location.lat])
+          .addTo(map.current);
+        
+        // Add click handler
+        markerEl.addEventListener('click', () => {
+          console.log("Marker clicked for item:", item.id);
+          if (onMarkerClick) {
+            onMarkerClick(item);
+          } else {
+            setSelectedItem(item);
+          }
+        });
+        
+        markersRef.current[item.id] = marker;
+      }
     });
   }, [items, singleItem, mapLoaded]);
 
@@ -214,39 +188,34 @@ const MapComponent = ({
     if (!selectedItem || !showItemInfo) return null;
     
     return (
-      <div 
-        className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-40"
-        style={{
-          maxWidth: "90%",
-          width: "300px"
-        }}
-      >
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="flex items-start p-2">
-              <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded">
+      <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-40 w-[300px] max-w-[90%]">
+        <Card className="overflow-hidden border-2 border-white/20 shadow-[0_0_10px_rgba(0,0,0,0.5)] bg-black/70 backdrop-blur-sm">
+          <CardContent className="p-3">
+            <div className="flex items-start">
+              <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded border-2 border-white/30">
                 <img 
                   src={selectedItem.imageUrl || "/placeholder.svg"} 
                   alt={selectedItem.title} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover pixelated"
                 />
               </div>
               <div className="ml-3 flex-1">
                 <div className="flex justify-between items-start">
-                  <Link to={`/item/${selectedItem.id}`} className="font-medium text-sm hover:text-primary">
+                  <Link to={`/item/${selectedItem.id}`} className="font-mono text-sm text-white hover:text-primary">
                     {selectedItem.title}
                   </Link>
                   <Badge className={`
-                    ${selectedItem.status === 'lost' ? 'bg-lost' :
-                      selectedItem.status === 'found' ? 'bg-found' : 
+                    font-mono uppercase text-[10px] font-bold
+                    ${selectedItem.status === 'lost' ? 'bg-lost text-black' :
+                      selectedItem.status === 'found' ? 'bg-found text-black' : 
                       'bg-gray-500'}`}
                   >
                     {selectedItem.status}
                   </Badge>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{selectedItem.location.address}</p>
+                <p className="text-xs text-gray-300 mt-1 font-mono">{selectedItem.location.address}</p>
                 {selectedItem.reward && (
-                  <p className="text-xs font-medium text-lost mt-1">Reward: ${selectedItem.reward}</p>
+                  <p className="text-xs font-bold text-lost mt-1 font-mono">Reward: ${selectedItem.reward}</p>
                 )}
               </div>
             </div>
@@ -257,17 +226,17 @@ const MapComponent = ({
   };
 
   return (
-    <div className="relative w-full rounded-lg overflow-hidden border" style={{ height }}>
+    <div className="relative w-full rounded-none sm:rounded-lg overflow-hidden border-2 border-white/20 shadow-[0_0_15px_rgba(0,0,0,0.3)]" style={{ height }}>
       <div 
         ref={mapContainer} 
-        className="absolute inset-0 bg-gray-100"
+        className="absolute inset-0 bg-gray-900"
       />
       
       {!mapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <p className="text-gray-500">Loading map...</p>
+            <div className="pixelated-spinner"></div>
+            <p className="text-white font-mono mt-4">Loading map...</p>
           </div>
         </div>
       )}
