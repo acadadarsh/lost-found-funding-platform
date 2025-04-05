@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        console.log("Auth state changed:", event, newSession?.user?.email);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Got existing session:", currentSession?.user?.email);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
@@ -67,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Error fetching profile:", error);
       } else {
         setProfile(data);
+        console.log("Profile loaded:", data);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -89,16 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: userData.fullName,
             username: userData.username,
-          }
+          },
+          emailRedirectTo: window.location.origin + '/auth'
         }
       });
 
       if (error) {
+        console.error("Signup error:", error);
         toast({
           title: "Error",
           description: error.message,
           variant: "destructive",
         });
+        throw error;
       } else {
         toast({
           title: "Account created",
@@ -106,11 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -119,29 +128,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log("Attempting to sign in with email:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
         toast({
           title: "Error",
           description: error.message,
           variant: "destructive",
         });
+        throw error;
       } else {
+        console.log("Login successful:", data);
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
       }
     } catch (error: any) {
+      console.error("Login catch error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Login failed",
         variant: "destructive",
       });
+      throw error;
     } finally {
       setLoading(false);
     }

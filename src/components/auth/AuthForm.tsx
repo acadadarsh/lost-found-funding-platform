@@ -7,11 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 export default function AuthForm() {
   const navigate = useNavigate();
   const { signIn, signUp, loading } = useAuth();
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const [loginData, setLoginData] = useState({
     email: "",
@@ -29,34 +33,65 @@ export default function AuthForm() {
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginData((prev) => ({ ...prev, [name]: value }));
+    setAuthError(null);
   };
 
   const handleSignupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSignupData((prev) => ({ ...prev, [name]: value }));
+    setAuthError(null);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn(loginData.email, loginData.password);
-    navigate('/');
+    setAuthError(null);
+    
+    try {
+      await signIn(loginData.email, loginData.password);
+      // Navigate happens in AuthContext after successful login
+    } catch (error: any) {
+      setAuthError(error?.message || "Login failed. Please check your credentials.");
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError(null);
     
     if (signupData.password !== signupData.confirmPassword) {
-      return; // Passwords don't match error is handled in the UI
+      setAuthError("Passwords don't match");
+      return;
     }
     
-    await signUp(
-      signupData.email, 
-      signupData.password, 
-      {
-        fullName: signupData.fullName,
-        username: signupData.username,
-      }
-    );
+    try {
+      await signUp(
+        signupData.email, 
+        signupData.password, 
+        {
+          fullName: signupData.fullName,
+          username: signupData.username,
+        }
+      );
+      
+      setSignupSuccess(true);
+      
+      // Clear the form
+      setSignupData({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        fullName: "",
+        username: "",
+      });
+      
+      // Switch to login tab after 2 seconds
+      setTimeout(() => {
+        setSignupSuccess(false);
+        setAuthMode("login");
+      }, 2000);
+    } catch (error: any) {
+      setAuthError(error?.message || "Signup failed. Please try again.");
+    }
   };
 
   return (
@@ -75,6 +110,20 @@ export default function AuthForm() {
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
+          
+          {authError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
+          
+          {signupSuccess && (
+            <Alert className="mb-4 bg-green-50 border-green-200 text-green-800">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <AlertDescription>Account created successfully! Please login.</AlertDescription>
+            </Alert>
+          )}
+          
           <TabsContent value="login">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">

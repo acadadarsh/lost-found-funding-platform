@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { ItemType } from "@/lib/types";
 import { mockItems } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const ItemDetailPage = () => {
   const { id } = useParams();
@@ -15,24 +17,89 @@ const ItemDetailPage = () => {
   const [item, setItem] = useState<ItemType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, we would fetch from an API
-    // For now, simulate loading and use mock data
-    setLoading(true);
-    setTimeout(() => {
-      const foundItem = mockItems.find(item => item.id === id);
+    const fetchItem = async () => {
+      setLoading(true);
       
-      if (foundItem) {
-        setItem(foundItem);
-        setError(null);
-      } else {
-        setError("Item not found");
+      try {
+        // Try to fetch from Supabase first
+        if (id) {
+          const { data, error } = await supabase
+            .from('items')
+            .select(`
+              id,
+              title,
+              description,
+              status,
+              image_url,
+              location_address,
+              location_lat,
+              location_lng,
+              reward,
+              total_contributions,
+              date,
+              user_id,
+              profiles(full_name, avatar_url, trust_score)
+            `)
+            .eq('id', id)
+            .single();
+
+          if (data && !error) {
+            // Format data to match ItemType
+            const formattedItem: ItemType = {
+              id: data.id,
+              title: data.title,
+              description: data.description || '',
+              status: data.status as ItemType['status'],
+              imageUrl: data.image_url || undefined,
+              location: {
+                address: data.location_address || '',
+                lat: data.location_lat || 0,
+                lng: data.location_lng || 0,
+              },
+              reward: data.reward || undefined,
+              totalContributions: data.total_contributions || undefined,
+              date: data.date || new Date().toISOString(),
+              userId: data.user_id,
+              userName: data.profiles?.full_name || 'Anonymous',
+              userImage: data.profiles?.avatar_url,
+              userTrustScore: data.profiles?.trust_score || 50,
+            };
+            
+            setItem(formattedItem);
+            setError(null);
+            console.log("Item loaded from database:", formattedItem);
+            return;
+          }
+        }
+        
+        // Fallback to mock data
+        console.log("Falling back to mock data");
+        const foundItem = mockItems.find(item => item.id === id);
+        
+        if (foundItem) {
+          setItem(foundItem);
+          setError(null);
+        } else {
+          setError("Item not found");
+        }
+      } catch (err) {
+        console.error("Error fetching item:", err);
+        setError("Error loading item");
+        toast({
+          title: "Error",
+          description: "Failed to load item details",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
-    }, 500);
-  }, [id]);
+    };
+
+    fetchItem();
+  }, [id, toast]);
 
   return (
     <div className="flex flex-col min-h-screen">
