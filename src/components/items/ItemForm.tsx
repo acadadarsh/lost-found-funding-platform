@@ -10,6 +10,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MapPin, Upload, DollarSign, Navigation } from "lucide-react";
 import { ItemStatus } from "@/lib/types";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { v4 as uuidv4 } from "uuid";
 
 const ItemForm = () => {
   const navigate = useNavigate();
@@ -17,6 +20,7 @@ const ItemForm = () => {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { position, address, loading: geoLoading } = useGeolocation();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -103,21 +107,78 @@ const ItemForm = () => {
     try {
       setLoading(true);
       
-      // In a real implementation, we would submit to an API
-      // For now, we'll just simulate a submission
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      let imageUrl = null;
       
-      toast({
-        title: "Success!",
-        description: `Your ${formData.status} item has been posted.`,
-      });
+      // Upload image if available
+      if (formData.image) {
+        const fileExt = formData.image.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `items/${fileName}`;
+        
+        // Try to upload to Supabase Storage
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('items')
+            .upload(filePath, formData.image);
+            
+          if (uploadError) {
+            throw uploadError;
+          }
+          
+          const { data } = supabase.storage.from('items').getPublicUrl(filePath);
+          imageUrl = data.publicUrl;
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          // Continue without image if upload failed
+          toast({
+            title: "Warning",
+            description: "Failed to upload image, but continuing with item submission.",
+            variant: "warning",
+          });
+        }
+      }
+      
+      // Insert item into database if authenticated
+      if (user) {
+        const { data, error } = await supabase.from('items').insert([
+          {
+            title: formData.title,
+            description: formData.description,
+            status: formData.status,
+            location_address: formData.location,
+            location_lat: formData.locationLat,
+            location_lng: formData.locationLng,
+            reward: formData.reward || 0,
+            image_url: imageUrl,
+            user_id: user.id,
+          }
+        ]).select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Success!",
+          description: `Your ${formData.status} item has been posted.`,
+        });
+      } else {
+        // For demo/mock purposes if not authenticated
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        toast({
+          title: "Demo Mode",
+          description: `Your ${formData.status} item has been posted (in demo mode).`,
+        });
+      }
       
       // Navigate to items page
       navigate("/items");
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error submitting form:', error);
       toast({
         title: "Error",
-        description: "Failed to submit your item. Please try again.",
+        description: error.message || "Failed to submit your item. Please try again.",
         variant: "destructive",
       });
     } finally {

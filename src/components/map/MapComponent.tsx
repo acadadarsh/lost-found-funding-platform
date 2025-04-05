@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -15,6 +16,7 @@ type MapProps = {
   showItemInfo?: boolean;
   singleItem?: ItemType;
   onMarkerClick?: (item: ItemType) => void;
+  showUserLocation?: boolean;
 };
 
 // Updated with the actual Mapbox access token
@@ -27,13 +29,16 @@ const MapComponent = ({
   height = "500px",
   showItemInfo = true,
   singleItem,
-  onMarkerClick
+  onMarkerClick,
+  showUserLocation = true
 }: MapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
+  const userLocationMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [selectedItem, setSelectedItem] = useState<ItemType | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Initialize map when component mounts
   useEffect(() => {
@@ -73,6 +78,76 @@ const MapComponent = ({
       });
     }
   }, [center, zoom]);
+
+  // Get and show user location
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !showUserLocation) return;
+
+    // Get user's current position
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        
+        // If center is not provided externally, center on user location
+        if (!center && map.current) {
+          map.current.flyTo({
+            center: [longitude, latitude],
+            zoom: zoom,
+            essential: true
+          });
+        }
+
+        // Add user location marker
+        if (userLocationMarkerRef.current) {
+          userLocationMarkerRef.current.remove();
+        }
+
+        // Create user location marker element
+        const userMarkerEl = document.createElement('div');
+        userMarkerEl.className = 'user-location-marker';
+        userMarkerEl.innerHTML = `
+          <div style="
+            background-color: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+          ">
+          </div>
+        `;
+        
+        // Add CSS animation for the user marker
+        const style = document.createElement('style');
+        style.innerHTML = `
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+        
+        // Add user location marker
+        userLocationMarkerRef.current = new mapboxgl.Marker(userMarkerEl)
+          .setLngLat([longitude, latitude])
+          .addTo(map.current);
+      },
+      (error) => {
+        console.error('Error getting user location:', error.message);
+      },
+      { 
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0 
+      }
+    );
+  }, [mapLoaded, showUserLocation, center, zoom]);
 
   // Handle markers for items
   useEffect(() => {

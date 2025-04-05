@@ -26,6 +26,7 @@ const ItemMap = ({ items, center, zoom = 13 }: ItemMapProps) => {
     }
   }, [position, mapCenter]);
 
+  // Show notification when position updates
   useEffect(() => {
     if (position && !geoLoading && !geoError) {
       // Position updated notification
@@ -74,6 +75,7 @@ const ItemMap = ({ items, center, zoom = 13 }: ItemMapProps) => {
         zoom={zoom}
         onMarkerClick={handleMarkerClick}
         height="500px"
+        showUserLocation={true}
       />
 
       {/* Map controls */}
