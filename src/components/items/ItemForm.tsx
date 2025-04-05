@@ -42,6 +42,7 @@ const ItemForm = () => {
         locationLat: position.lat,
         locationLng: position.lng
       }));
+      console.log("Updated form with geolocation:", position);
     }
   }, [position, address, formData.location]);
 
@@ -86,6 +87,8 @@ const ItemForm = () => {
       locationLng: position.lng
     }));
     
+    console.log("Manually set location to:", position);
+    
     toast({
       title: "Current location used",
       description: "Your current location has been added to the form.",
@@ -102,6 +105,11 @@ const ItemForm = () => {
         variant: "destructive",
       });
       return;
+    }
+    
+    // Ensure we have valid location data
+    if (!formData.locationLat || !formData.locationLng) {
+      console.warn("Missing location coordinates. Using default values.");
     }
     
     try {
@@ -133,10 +141,21 @@ const ItemForm = () => {
           toast({
             title: "Warning",
             description: "Failed to upload image, but continuing with item submission.",
-            variant: "default", // Changed from "warning" to "default" since "warning" is not a valid variant
+            variant: "default",
           });
         }
       }
+      
+      // Log data before submitting
+      console.log("Submitting item with data:", {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        location: formData.location,
+        locationLat: formData.locationLat,
+        locationLng: formData.locationLng,
+        reward: formData.reward
+      });
       
       // Insert item into database if authenticated
       if (user) {
@@ -157,6 +176,8 @@ const ItemForm = () => {
         if (error) {
           throw error;
         }
+        
+        console.log("Item created successfully:", data);
         
         toast({
           title: "Success!",

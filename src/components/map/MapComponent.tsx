@@ -58,6 +58,7 @@ const MapComponent = ({
     mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
     
     mapInstance.on('load', () => {
+      console.log("Map loaded successfully");
       setMapLoaded(true);
       map.current = mapInstance;
     });
@@ -71,6 +72,7 @@ const MapComponent = ({
   // Update map center when center prop changes
   useEffect(() => {
     if (map.current && center) {
+      console.log("Flying to center:", center);
       map.current.flyTo({
         center: [center.lng, center.lat],
         zoom: zoom,
@@ -135,7 +137,6 @@ const MapComponent = ({
   // Handle markers for items
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
-    console.log("Adding markers for items:", items.length);
     
     // Clear existing markers
     Object.values(markersRef.current).forEach(marker => marker.remove());
@@ -144,9 +145,23 @@ const MapComponent = ({
     // Add markers for all items or single item
     const displayItems = singleItem ? [singleItem] : items;
     
+    console.log("Adding markers for items:", displayItems.length);
+    
     displayItems.forEach(item => {
-      if (!item.location?.lat || !item.location?.lng) return;
-      console.log("Adding marker for item:", item.id, item.location);
+      if (!item.location?.lat || !item.location?.lng) {
+        console.warn("Item missing location data:", item.id, item.location);
+        return;
+      }
+      
+      const lat = parseFloat(String(item.location.lat));
+      const lng = parseFloat(String(item.location.lng));
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        console.warn("Invalid location coordinates:", item.id, item.location);
+        return;
+      }
+      
+      console.log(`Adding marker for item ${item.id} at position:`, lat, lng);
       
       // Create marker element with pixelated style
       const markerEl = document.createElement('div');
@@ -165,7 +180,7 @@ const MapComponent = ({
       // Add marker to map
       if (map.current) {
         const marker = new mapboxgl.Marker(markerEl)
-          .setLngLat([item.location.lng, item.location.lat])
+          .setLngLat([lng, lat])
           .addTo(map.current);
         
         // Add click handler

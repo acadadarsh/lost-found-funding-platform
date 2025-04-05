@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
@@ -42,18 +41,13 @@ const ItemDetailPage = () => {
           
           console.log("Item data retrieved:", itemData);
           
-          // Then, get the profile data separately
-          const { data: profileData, error: profileError } = await supabase
+          // Then, get the profile data separately - use maybeSingle() to avoid errors if no profile exists
+          const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', itemData.user_id)
-            .single();
+            .maybeSingle();
             
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            // Don't throw here, just log the error and continue with default values
-          }
-          
           console.log("Profile data retrieved:", profileData || "No profile found");
 
           // Format data to match ItemType
@@ -65,8 +59,8 @@ const ItemDetailPage = () => {
             imageUrl: itemData.image_url || undefined,
             location: {
               address: itemData.location_address || '',
-              lat: itemData.location_lat || 0,
-              lng: itemData.location_lng || 0,
+              lat: parseFloat(String(itemData.location_lat)) || 0,
+              lng: parseFloat(String(itemData.location_lng)) || 0,
             },
             reward: itemData.reward || undefined,
             totalContributions: itemData.total_contributions || undefined,
